@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Fitness & Nutrition Planner</title>
+    
+    <!-- Load html2pdf.js for PDF download capability -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- NO EXTERNAL CDN - All CSS embedded below for robustness -->
+    <style>
+        /* --- Customized CSS replacing ALL Tailwind utilities for self-contained robustness --- */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        
+        :root {
+            --primary-color: #10B981; /* Emerald 500 */
+            --secondary-color: #3B82F6; /* Blue 500 */
+            --bg-color: #F9FAFB; /* Gray 50 */
+            --text-color-dark: #1F2937; /* Gray 900/800 */
+            --text-color-medium: #4B5563; /* Gray 600 */
+            --border-color: #E5E7EB; /* Gray 200 */
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            min-height: 100vh;
+            padding: 1rem; /* p-4 */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 2.5rem; /* pt-10 */
+        }
+        @media (min-width: 640px) {
+            body {
+                padding: 2rem; /* sm:p-8 */
+            }
+        }
+
+        /* Container Box (w-full max-w-4xl bg-white rounded-xl shadow-2xl p-6 md:p-10 border border-gray-100) */
+        .container-box {
+            width: 100%;
+            max-width: 64rem; /* max-w-4xl */
+            background-color: white;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 20px 25px -5px var(--shadow-color), 0 8px 10px -6px var(--shadow-color); /* shadow-2xl */
+            padding: 1.5rem; /* p-6 */
+            border: 1px solid #F3F4F6; /* border-gray-100 */
+        }
+        @media (min-width: 768px) {
+            .container-box {
+                padding: 2.5rem; /* md:p-10 */
+            }
+        }
+
+        /* Header (text-center mb-10) */
+        .header-main {
+            text-align: center;
+            margin-bottom: 2.5rem; /* mb-10 */
+        }
+        /* Header Title (text-4xl font-extrabold text-gray-900 leading-tight) */
+        .header-title {
+            font-size: 2.25rem; /* text-4xl */
+            font-weight: 800; /* font-extrabold */
+            line-height: 1.2; /* leading-tight */
+            color: var(--text-color-dark);
+        }
+        /* Header Span (text-emerald-500) */
+        .header-title span {
+            color: var(--primary-color);
+        }
+        /* Header Subtitle (mt-2 text-lg text-gray-600) */
+        .header-subtitle {
+            margin-top: 0.5rem; /* mt-2 */
+            font-size: 1.125rem; /* text-lg */
+            color: var(--text-color-medium);
+        }
+        
+        /* Input Grid (grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8) */
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem; /* gap-6 */
+            margin-bottom: 2rem; /* mb-8 */
+        }
+        @media (min-width: 768px) {
+            .input-grid {
+                grid-template-columns: repeat(2, 1fr); /* md:grid-cols-2 */
+            }
+        }
+        @media (min-width: 1024px) {
+            .input-grid {
+                grid-template-columns: repeat(3, 1fr); /* lg:grid-cols-3 */
+            }
+            .lg-col-span-3 {
+                grid-column: span 3 / span 3;
+            }
+        }
+        
+        /* Form Label (block text-sm font-medium text-gray-700 mb-1) */
+        .form-label {
+            display: block;
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* font-medium */
+            color: #374151; /* Gray 700 */
+            margin-bottom: 0.25rem; /* mb-1 */
+        }
+        
+        /* Form Inputs/Selects/Textarea (w-full p-3 border border-gray-300 rounded-lg shadow-sm...) */
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem; /* p-3 */
+            border: 1px solid #D1D5DB; /* border-gray-300 */
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+            transition: border-color 150ms, box-shadow 150ms;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: 2px solid var(--primary-color); /* focus:ring-emerald-500 */
+            outline-offset: 0px;
+            border-color: var(--primary-color); /* focus:border-emerald-500 */
+            box-shadow: 0 0 0 1px var(--primary-color), 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .form-textarea {
+            resize: vertical;
+        }
+
+        /* Hidden Utility (hidden lg:block) */
+        .text-hidden {
+            display: none;
+        }
+        @media (min-width: 1024px) {
+            .text-hidden.lg-block {
+                display: block;
+            }
+        }
+
+        /* Action Container (flex flex-col sm:flex-row gap-4 items-center justify-between mt-8) */
+        .action-container {
+            display: flex;
+            flex-direction: column; /* flex-col */
+            gap: 1rem; /* gap-4 */
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 2rem; /* mt-8 */
+        }
+        @media (min-width: 640px) {
+            .action-container {
+                flex-direction: row; /* sm:flex-row */
+                justify-content: center; /* Center the buttons */
+            }
+            .action-button {
+                width: auto !important; /* sm:w-auto */
+            }
+        }
+
+        /* Base Action Button (w-full sm:w-auto px-8 py-3 bg-emerald-500 text-white font-semibold rounded-xl shadow-lg...) */
+        .action-button {
+            width: 100%; /* w-full */
+            padding: 0.75rem 2rem; /* px-8 py-3 */
+            color: white;
+            font-weight: 600; /* font-semibold */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); /* shadow-lg */
+            transition: background-color 300ms, transform 300ms, box-shadow 300ms;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Generate Button (Primary) */
+        #generate-btn {
+            background-color: var(--primary-color);
+        }
+        #generate-btn:hover {
+            background-color: #059669; /* hover:bg-emerald-600 */
+            transform: scale(1.02); /* hover:scale-[1.02] */
+        }
+        #generate-btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 4px #A7F3D0; /* focus:ring-4 focus:ring-emerald-300 */
+        }
+
+        /* Download Button (Secondary) */
+        #download-btn {
+            background-color: var(--secondary-color); /* Blue 500 */
+        }
+        #download-btn:hover {
+            background-color: #2563EB; /* hover:bg-blue-600 */
+            transform: scale(1.02); /* hover:scale-[1.02] */
+        }
+        #download-btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 4px #BFDBFE; /* focus:ring-4 focus:ring-blue-300 */
+        }
+
+        .action-button:active {
+            transform: scale(0.98); /* active:scale-[0.98] */
+        }
+        .action-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Status Message (text-sm text-center text-gray-500 italic) */
+        .status-message {
+            font-size: 0.875rem; /* text-sm */
+            text-align: center;
+            color: #6B7280; /* Gray 500 */
+            font-style: italic;
+        }
+        .action-container > .status-message {
+            width: 100%; /* Ensure status message takes full width on small screens */
+            margin-top: 0.5rem;
+        }
+        @media (min-width: 640px) {
+            .action-container {
+                gap: 1.5rem; /* Increase gap between button and status */
+            }
+            .action-container > .status-message {
+                width: auto;
+                margin-top: 0;
+            }
+        }
+
+        /* Output Area (mt-12 hidden) */
+        .output-area {
+            margin-top: 3rem; /* mt-12 */
+            display: none; /* hidden */
+        }
+        .output-area.visible {
+            display: block;
+        }
+
+        /* Output Heading (text-2xl font-bold text-gray-800 border-b pb-3 mb-6) */
+        .output-heading {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700; /* font-bold */
+            color: #1F2937; /* gray-800 */
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem; /* pb-3 */
+            margin-bottom: 1.5rem; /* mb-6 */
+        }
+        
+        /* Loader and Error Box Styles */
+        .loading-indicator {
+            text-align: center;
+            padding: 3rem 0; /* py-12 */
+            display: none; /* hidden */
+        }
+        .dot {
+            width: 12px;
+            height: 12px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 4px;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+        .loading-message {
+            margin-top: 1rem; /* mt-4 */
+            color: #047857; /* emerald-600 */
+            font-weight: 500; /* font-medium */
+        }
+        .error-box {
+            background-color: #FEE2E2; /* red-100 */
+            border: 1px solid #F87171; /* red-400 */
+            color: #B91C1C; /* red-700 */
+            padding: 1rem; /* px-4 py-3 */
+            border-radius: 0.25rem;
+            position: relative;
+            display: none;
+        }
+        /* CSS State Toggles */
+        .loader-visible {
+            display: block;
+        }
+        .error-visible {
+            display: block;
+        }
+        .hidden {
+            display: none !important;
+        }
+
+        /* Generated Content Styles (Mimicking Tailwind Prose for readability) */
+        .plan-content {
+            max-width: none; /* max-w-none */
+            color: #4B5563; /* text-gray-700 */
+            line-height: 1.625; /* leading-relaxed */
+        }
+        .plan-content p {
+            margin-bottom: 1em;
+        }
+        .plan-content h1, .plan-content h2 {
+            font-weight: 700;
+            color: var(--text-color-dark);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .plan-content h1 { font-size: 1.875rem; }
+        .plan-content h2 { font-size: 1.5rem; }
+        .plan-content ul {
+            list-style-type: disc;
+            margin-left: 1.5rem;
+            margin-bottom: 1em;
+        }
+        .plan-content li {
+            margin-bottom: 0.5em;
+        }
+        .plan-content strong {
+            font-weight: 700;
+        }
+        .plan-content blockquote {
+            border-left: 4px solid var(--primary-color);
+            padding-left: 1rem;
+            margin: 1rem 0;
+            color: #374151; /* gray-700 */
+            font-style: italic;
+        }
+        .plan-content hr {
+            border: none;
+            border-top: 1px solid var(--border-color);
+            margin: 1.5rem 0;
+        }
+
+        /* Table Styles */
+        .plan-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            overflow-x: auto; /* Ensure tables are scrollable on small screens */
+            display: block; /* Allows overflow-x to work */
+            white-space: nowrap; 
+        }
+        .plan-content th, .plan-content td {
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+            text-align: left;
+            white-space: normal; /* Allow text wrapping inside cells */
+        }
+        .plan-content th {
+            background-color: var(--bg-color);
+            font-weight: 600;
+            color: var(--text-color-dark);
+        }
+
+        /* Sources Section (mt-10 pt-6 border-t border-gray-200) */
+        .sources-area {
+            margin-top: 2.5rem; /* mt-10 */
+            padding-top: 1.5rem; /* pt-6 */
+            border-top: 1px solid var(--border-color);
+            display: none; /* hidden by default */
+        }
+        .sources-area.visible {
+            display: block;
+        }
+        .sources-area p {
+            font-size: 0.75rem; /* text-xs */
+            font-weight: 600; /* font-semibold */
+            text-transform: uppercase;
+            color: #6B7280; /* gray-500 */
+            margin-bottom: 0.5rem; /* mb-2 */
+        }
+        .sources-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.875rem; /* text-sm */
+            color: #4B5563; /* gray-600 */
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem; /* space-y-1 */
+        }
+        .sources-list a {
+            color: var(--secondary-color); /* text-blue-500 */
+            text-decoration: none;
+            transition: color 150ms;
+        }
+        .sources-list a:hover {
+            text-decoration: underline;
+            color: #2563EB; /* hover:text-blue-700 */
+        }
+        .sources-list a:focus {
+            outline: 2px solid var(--secondary-color);
+            outline-offset: 2px;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main Application Container -->
+    <div id="app" class="w-full">
+
+        <div class="container-box">
+
+            <header class="header-main">
+                <h1 class="header-title">
+                    Your <span>Personalized</span> AI Fitness Plan
+                </h1>
+                <p class="header-subtitle">
+                    Tell us your goals, body stats (including target weight), budget, and access, and we'll craft a plan just for you.
+                </p>
+            </header>
+
+            <!-- Input Form Section -->
+            <div id="input-section" class="input-grid">
+                
+                <!-- Row 1: Core Goal Details -->
+                
+                <!-- Input 1: Main Goal -->
+                <div>
+                    <label for="goal" class="form-label">Fitness Goal</label>
+                    <select id="goal" class="form-select">
+                        <option value="Lose weight and burn fat">Lose Weight and Burn Fat</option>
+                        <option value="Build muscle and strength">Build Muscle and Strength</option>
+                        <option value="Improve cardiovascular endurance">Improve Endurance</option>
+                        <option value="General health and wellness">General Health and Wellness</option>
+                    </select>
+                </div>
+
+                <!-- Input 2: Duration -->
+                <div>
+                    <label for="duration" class="form-label">Plan Duration</label>
+                    <select id="duration" class="form-select">
+                        <option value="2-3 month comprehensive">2-3 Months</option>
+                        <option value="6 month detailed">6 Months</option>
+                        <option value="1 year long-term">1 Year</option>
+                        <option value="3 year lifestyle change">Up to 3 Years</option>
+                        <option value="1 week trial">1 Week Trial</option>
+                    </select>
+                </div>
+
+                <!-- Input 3: Current Fitness Level -->
+                <div>
+                    <label for="level" class="form-label">Current Fitness Level</label>
+                    <select id="level" class="form-select">
+                        <option value="Beginner (new to fitness)">Beginner</option>
+                        <option value="Intermediate (exercise regularly)">Intermediate</option>
+                        <option value="Advanced (experienced athlete)">Advanced</option>
+                    </select>
+                </div>
+
+                <!-- Row 2: Body Stats -->
+                
+                <!-- Input 4: Age -->
+                <div>
+                    <label for="age" class="form-label">Age (Years)</label>
+                    <input type="number" id="age" value="30" class="form-input" placeholder="e.g., 30" min="15">
+                </div>
+
+                <!-- Input 5: Height -->
+                <div>
+                    <label for="height" class="form-label">Height</label>
+                    <input type="text" id="height" value="5'10" class="form-input" placeholder="e.g., 5'10 or 178 cm">
+                </div>
+
+                <!-- Input 6: Current Weight -->
+                <div>
+                    <label for="currentWeight" class="form-label">Current Weight</label>
+                    <input type="text" id="currentWeight" value="180 lbs" class="form-input" placeholder="e.g., 180 lbs or 82 kg">
+                </div>
+
+                <!-- Row 3: Goal Weight & Access & Budget -->
+                
+                <!-- Input 7: Goal Weight (CRITICAL ADDITION) -->
+                <div>
+                    <label for="goalWeight" class="form-label font-bold text-gray-800">Target Goal Weight</label>
+                    <input type="text" id="goalWeight" value="165 lbs" class="form-input" placeholder="e.g., 165 lbs or 75 kg">
+                </div>
+                
+                <!-- Input 8: Equipment Access -->
+                <div>
+                    <label for="equipment" class="form-label">Equipment Access</label>
+                    <select id="equipment" class="form-select">
+                        <option value="Full commercial gym access">Full Commercial Gym</option>
+                        <option value="Limited equipment (dumbbells, resistance bands)">Limited Home Equipment</option>
+                        <option value="No equipment (bodyweight only)">Bodyweight Only</option>
+                        <option value="Custom list below">Custom Equipment List (see notes)</option>
+                    </select>
+                </div>
+
+                <!-- Input 9: Monthly Diet Budget -->
+                <div>
+                    <label for="budget" class="form-label">Monthly Diet Budget</label>
+                    <input type="text" id="budget" class="form-input" placeholder="e.g., ₹10,000 INR">
+                </div>
+
+                <!-- Input 10: Detailed Notes / Custom Equipment List (FULL WIDTH TEXTAREA) -->
+                <div class="lg-col-span-3">
+                    <label for="detailed-notes" class="form-label">Detailed Notes (Dietary Restrictions, Custom Equipment List, Injuries, etc.)</label>
+                    <textarea id="detailed-notes" rows="3" class="form-textarea" placeholder="e.g., I am Vegetarian. My custom equipment list includes: barbell, squat rack, and a treadmill. Avoid high-impact cardio due to knee pain."></textarea>
+                </div>
+
+            </div>
+
+            <!-- Generate Button & PDF Download -->
+            <div class="action-container">
+                <button onclick="generatePlan()" id="generate-btn" class="action-button">
+                    Generate My Plan
+                </button>
+                <!-- NEW PDF DOWNLOAD BUTTON -->
+                <button onclick="downloadPdf()" id="download-btn" class="action-button hidden">
+                    Download Plan (PDF)
+                </button>
+                <div id="status-message" class="status-message"></div>
+            </div>
+
+            <!-- Output Section -->
+            <div id="output-area" class="output-area">
+                <h2 class="output-heading">Your Customized Plan</h2>
+                
+                <!-- Loader and Error Message -->
+                <div id="loading-indicator" class="loading-indicator">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <p class="loading-message">Crafting your personalized plan... (Expecting three tables below)</p>
+                </div>
+                
+                <div id="error-message" class="error-box" role="alert">
+                    <strong class="font-bold">Error:</strong>
+                    <span id="error-text" class="block">Could not generate the plan. Please try again.</span>
+                </div>
+
+                <!-- Generated Plan Content -->
+                <div id="plan-content" class="plan-content">
+                    <!-- Markdown content will be rendered here -->
+                </div>
+                
+                <!-- Sources Section -->
+                <div id="sources-area" class="sources-area">
+                    <p>Sources Referenced:</p>
+                    <ul id="sources-list" class="sources-list">
+                        <!-- Sources will be listed here -->
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script type="module">
+        // Global variables for Firebase configuration (Mandatory for Canvas environment)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : '';
+        
+        // --- Core Gemini API Configuration ---
+        const MODEL_NAME = 'gemini-2.5-flash-preview-09-2025';
+        const API_BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent`;
+        const API_KEY = ""; // Canvas will automatically populate this for security
+
+        const outputArea = document.getElementById('output-area');
+        const planContent = document.getElementById('plan-content');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const generateBtn = document.getElementById('generate-btn');
+        const downloadBtn = document.getElementById('download-btn'); // New element
+        const sourcesList = document.getElementById('sources-list');
+        const sourcesArea = document.getElementById('sources-area');
+        const statusMessage = document.getElementById('status-message');
+
+
+        /**
+         * Converts Markdown text to HTML, specifically focusing on robust table parsing.
+         * Includes the critical cleanup logic for LaTeX/Math remnants.
+         * @param {string} markdownText - The text in Markdown format.
+         * @returns {string} The text converted to basic HTML.
+         */
+        function markdownToHtml(markdownText) {
+            if (!markdownText) return '';
+
+            let lines = markdownText.split('\n');
+            let html = [];
+            let inTable = false;
+            let currentTable = { header: [], body: [] };
+
+            // Function to close the current table and add its HTML to the output
+            const endTable = () => {
+                // Only render if we have a header and body rows
+                if (currentTable.header.length === 0 || currentTable.body.length === 0) {
+                    inTable = false;
+                    currentTable = { header: [], body: [] };
+                    return;
+                }
+
+                // Helper to clean cell content (remove extra spaces, Markdown, LaTeX remnants)
+                const cleanCell = (cell, isHeader = false) => {
+                    let cleaned = cell.trim().replace(/^\||\|$/g, '').trim();
+                    
+                    // CRITICAL FIX: Enhanced cleanup for LaTeX/Math garbage (which often breaks cell content)
+                    cleaned = cleaned.replace(/\$(.*?)\$/g, (match, p1) => p1.trim()); 
+                    cleaned = cleaned.replace(/\\text\{([^{}]*)\}/g, (match, p1) => p1.trim());
+                    cleaned = cleaned.replace(/\\(approx|g|lbs|kg|kcal|INR|Rs)/g, '');
+                    
+                    // Replace Markdown bold/strong
+                    cleaned = cleaned.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    cleaned = cleaned.replace(/__(.*?)__/g, '<strong>$1</strong>');
+                    
+                    return cleaned.trim();
+                };
+
+                let tableHtml = '<table><thead><tr>';
+                
+                // Process the Header (the first line before the separator)
+                const headerCells = currentTable.header[0].split('|').map(c => cleanCell(c, true)).filter(c => c !== '');
+                headerCells.forEach(cell => {
+                    tableHtml += `<th>${cell}</th>`;
+                });
+                tableHtml += '</tr></thead><tbody>';
+
+                // Process the Body
+                currentTable.body.forEach(row => {
+                    tableHtml += '<tr>';
+                    // Split by '|' and filter out empty strings resulting from the leading/trailing pipes
+                    const cells = row.split('|').map(c => cleanCell(c)).filter(c => c !== '');
+                    
+                    // We must match the number of header cells (the first cell is often empty when splitting)
+                    const actualCells = cells.length > headerCells.length ? cells.slice(1) : cells;
+
+                    actualCells.forEach(cellContent => {
+                        tableHtml += `<td>${cellContent}</td>`;
+                    });
+                    tableHtml += '</tr>';
+                });
+                tableHtml += '</tbody></table>';
+                html.push(tableHtml);
+
+                // Reset state
+                inTable = false;
+                currentTable = { header: [], body: [] };
+            };
+
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                
+                // --- TABLE HANDLING START (New, more robust logic) ---
+
+                // 1. If currently in a table, process the line as a body row or end the table
+                if (inTable) {
+                    // Check if it's a valid table row (must start and end with |)
+                    if (/^\|.*\|$/g.test(line)) {
+                        currentTable.body.push(line);
+                        continue;
+                    } else {
+                        // End the table if we hit a non-table line
+                        endTable();
+                        // Decrement 'i' to re-process the current line with non-table logic
+                        i--; 
+                        continue;
+                    }
+                }
+
+                // 2. If NOT in a table, check for the START of a table (Header + Separator)
+                // Check if line is a potential header row (|...|)
+                if (/^\|.*\|$/g.test(line) && i + 1 < lines.length) {
+                    let nextLine = lines[i+1].trim();
+                    // Check for the separator line pattern (|---| or |:--|--:| etc.)
+                    if (/^\|[|:\s-]+\|/g.test(nextLine)) {
+                        // We found the start of a table!
+                        inTable = true;
+                        currentTable.header.push(line); // Line is the header
+                        i++; // Skip the separator line itself
+                        continue;
+                    }
+                }
+                
+                // --- TABLE HANDLING END ---
+                
+                // 3. Generic Markdown Parsing (only runs if not in a table)
+                if (line.startsWith('## ')) {
+                    html.push(`<h2>${line.substring(3).trim()}</h2>`);
+                } else if (line.startsWith('# ')) {
+                    html.push(`<h1>${line.substring(2).trim()}</h1>`);
+                } else if (line.startsWith('* ') || line.startsWith('- ')) {
+                    // Collect continuous list items
+                    let listItems = [`<li>${line.substring(2).trim()}</li>`];
+                    while (i + 1 < lines.length && (lines[i+1].trim().startsWith('* ') || lines[i+1].trim().startsWith('- '))) {
+                        i++;
+                        listItems.push(`<li>${lines[i].trim().substring(2).trim()}</li>`);
+                    }
+                    html.push(`<ul>${listItems.join('')}</ul>`);
+                } else if (line.startsWith('***') || line.startsWith('---')) {
+                    html.push(`<hr>`);
+                } else if (line !== '') {
+                    // Treat as a paragraph, applying simple formatting
+                    let paragraph = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    paragraph = paragraph.replace(/__(.*?)__/g, '<strong>$1</strong>');
+
+                    if (paragraph.startsWith('>')) {
+                        html.push(`<blockquote>${paragraph.substring(1).trim()}</blockquote>`);
+                    } else {
+                        html.push(`<p>${paragraph}</p>`);
+                    }
+                }
+            }
+
+            // Final check to close any open table at the end of the document
+            if (inTable) {
+                endTable();
+            }
+
+            return html.join('');
+        }
+
+
+        /**
+         * Clears previous results and displays the loading state.
+         */
+        function showLoading() {
+            outputArea.classList.add('visible');
+            planContent.innerHTML = '';
+            sourcesList.innerHTML = '';
+            sourcesArea.classList.remove('visible'); // Hide sources
+            errorMessage.classList.remove('error-visible'); // Hide error
+            loadingIndicator.classList.add('loader-visible'); // Show loader
+            generateBtn.disabled = true;
+            downloadBtn.classList.add('hidden'); // Hide PDF button while generating
+            generateBtn.textContent = 'Generating...';
+            statusMessage.textContent = 'Crafting your personalized plan... (May take up to 30 seconds)';
+        }
+
+        /**
+         * Hides the loading state and updates the button.
+         */
+        function hideLoading() {
+            loadingIndicator.classList.remove('loader-visible');
+            generateBtn.disabled = false;
+            generateBtn.textContent = 'Generate New Plan';
+            statusMessage.textContent = '';
+        }
+
+        /**
+         * Displays an error message.
+         * @param {string} message - The error message to display.
+         */
+        function showError(message) {
+            hideLoading();
+            downloadBtn.classList.add('hidden');
+            errorMessage.classList.add('error-visible');
+            errorText.textContent = message;
+        }
+
+        /**
+         * Downloads the generated plan content as a PDF.
+         */
+        window.downloadPdf = function() {
+            const element = document.getElementById('plan-content');
+            if (!element) {
+                statusMessage.textContent = 'No plan generated yet.';
+                return;
+            }
+
+            statusMessage.textContent = 'Preparing PDF for download...';
+            
+            // Configuration options for html2pdf
+            const options = {
+                margin: [0.5, 0.5, 0.5, 0.5], // Top, Left, Bottom, Right margin (inches)
+                filename: 'Fitness-Plan-' + new Date().toISOString().slice(0, 10) + '.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, logging: false },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            // Use the bundled html2pdf object to generate and save the file
+            try {
+                html2pdf().set(options).from(element).save();
+                statusMessage.textContent = 'PDF download started!';
+            } catch (e) {
+                statusMessage.textContent = 'Error creating PDF. Try generating the plan again.';
+                console.error("PDF generation error:", e);
+            }
+            setTimeout(() => { statusMessage.textContent = ''; }, 3000);
+        };
+
+
+        /**
+         * The main function to initiate the plan generation.
+         */
+        window.generatePlan = async function() {
+            showLoading();
+
+            // Core Plan Inputs
+            const goal = document.getElementById('goal').value;
+            const duration = document.getElementById('duration').value;
+            const level = document.getElementById('level').value;
+
+            // Detailed Inputs
+            const age = document.getElementById('age').value || 'Unknown';
+            const height = document.getElementById('height').value || 'Unknown';
+            const currentWeight = document.getElementById('currentWeight').value || 'Unknown';
+            const goalWeight = document.getElementById('goalWeight').value || 'Unspecified'; // CRITICAL INPUT
+            const equipment = document.getElementById('equipment').value;
+            const budget = document.getElementById('budget').value || 'Flexible';
+            const detailedNotes = document.getElementById('detailed-notes').value || 'No additional notes.'; 
+
+            // FIX: Re-emphasize NO LaTeX and mandatory tables in the prompt
+            const systemPrompt = "You are a world-class AI designed to create personalized fitness and nutrition plans. Start your response with a strong safety statement: 'This is an AI generated plan personalized for you. Always consult with a qualified health professional before starting any new fitness or diet plan, and **strictly avoid any foods you are allergic or intolerant to.**' Your plan MUST be structured clearly and simply using Markdown. **CRITICAL RULE: DO NOT use any LaTeX math notation ($...$, \\text{}, \\approx, or other backslash-prefixed commands) in the output. Use ONLY plain text and the '₹' symbol for prices.** You MUST generate **three distinct Markdown Tables** as requested in the user query, and a final section for dish suggestions. Ensure the tables are easy to read and use accurate, relevant columns. **ALL prices MUST be denominated in Indian Rupees (INR) (use the '₹' symbol) and be estimated based on a monthly budget check.**";
+            
+            // NOTE: The order has been changed to move the 'Overview' section to the very end (item 6)
+            const userQuery = `Create a detailed ${duration} fitness and nutrition plan.
+            - Primary Goal: ${goal}
+            - Current Level: ${level}
+            - Age: ${age}
+            - Height: ${height}
+            - Current Weight: ${currentWeight}
+            - **Target Goal Weight: ${goalWeight}**
+            - Equipment Access Selected: ${equipment}
+            - Monthly Diet Budget: ${budget}
+            - Additional Notes (Custom Equipment, Restrictions, Injuries): ${detailedNotes}
+            
+            The plan must include content in this exact order:
+            
+            1. **Table 1: Food Resource Database**. This table must list a **minimum of 10 key food items** used in the plan and include the following column headers: | Food Name | Key Nutritional Value (e.g., Calories/Macros per 100g) | Digestion Rate (High/Med/Low) | Estimated Price (per serving in INR) | Daily Qty (grams/cups) |.
+            
+            2. **Table 2: Weekly Plan Overview**. This table must provide a high-level weekly schedule and include the column headers: | Day | Primary Focus | Workout Type | Notes |.
+            
+            3. **Table 3: Sample 1-Day Meal Plan**. This table must detail the sample day's meals and include the column headers: | Meal | Item/Description (using ingredients from Table 1) | Portion Size |.
+            
+            4. A sample 1-day detailed workout routine (Warm-up, Exercises, Cool-down) tailored to the ${goal} goal and the available equipment. This can be in text/bullet form.
+            
+            5. A final section titled **"Dishes You Can Make"** that suggests at least 3-5 specific dishes/recipes using the food items mentioned in **Table 1**.
+
+            6. An overview of the plan structure and key expectations. (This section must be the last one in the output).`;
+
+            try {
+                const responseData = await callGeminiApi(systemPrompt, userQuery);
+                
+                if (responseData && responseData.text) {
+                    // 1. Display the generated plan using the improved Markdown parser
+                    planContent.innerHTML = markdownToHtml(responseData.text);
+                    downloadBtn.classList.remove('hidden'); // Show PDF button on successful generation
+
+                    // 2. Display sources if available
+                    if (responseData.sources && responseData.sources.length > 0) {
+                        sourcesArea.classList.add('visible');
+                        responseData.sources.forEach(source => {
+                            const li = document.createElement('li');
+                            li.innerHTML = `<a href="${source.uri}" target="_blank">${source.title}</a> (from: ${new URL(source.uri).hostname})`;
+                            sourcesList.appendChild(li);
+                        });
+                    } else {
+                        sourcesArea.classList.remove('visible');
+                    }
+                } else {
+                    showError("The AI did not return a valid plan. Check the console for details.");
+                }
+            } catch (error) {
+                console.error("Plan generation failed:", error);
+                showError("A network or API error occurred. Please check your connection and try again.");
+            } finally {
+                hideLoading();
+            }
+        };
+
+        /**
+         * Handles the API call with exponential backoff and search grounding.
+         * @param {string} systemPrompt - Instructions for the model's persona and rules.
+         * @param {string} userQuery - The specific task for the model.
+         * @returns {Promise<{text: string, sources: Array<{uri: string, title: string}>}>} The generated text and its sources.
+         */
+        async function callGeminiApi(systemPrompt, userQuery) {
+            const maxRetries = 5;
+            let currentDelay = 1000; // 1 second
+            
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const payload = {
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        // Use Google Search grounding for up-to-date fitness and nutrition data
+                        tools: [{ "google_search": {} }],
+                        systemInstruction: {
+                            parts: [{ text: systemPrompt }]
+                        },
+                    };
+
+                    const response = await fetch(`${API_BASE_URL}?key=${API_KEY}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.status === 429) {
+                        // Rate limit error, proceed to retry
+                        throw new Error('Rate limit exceeded (429). Retrying...');
+                    }
+
+                    if (!response.ok) {
+                        const errorBody = await response.json();
+                        throw new Error(`API request failed with status ${response.status}: ${JSON.stringify(errorBody)}`);
+                    }
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        const text = candidate.content.parts[0].text;
+                        let sources = [];
+
+                        const groundingMetadata = candidate.groundingMetadata;
+                        if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                            sources = groundingMetadata.groundingAttributions
+                                .map(attribution => ({
+                                    uri: attribution.web?.uri,
+                                    title: attribution.web?.title,
+                                }))
+                                .filter(source => source.uri && source.title);
+                        }
+                        
+                        return { text, sources };
+                    } else {
+                        // Handle cases where response structure is missing content
+                        throw new Error('API response missing text content or candidate structure.');
+                    }
+
+                } catch (error) {
+                    // console.log(`Attempt ${i + 1} failed.`, error.message);
+                    if (i === maxRetries - 1) {
+                        throw new Error('All API retries failed.');
+                    }
+                    // Wait using exponential backoff
+                    await new Promise(resolve => setTimeout(resolve, currentDelay));
+                    currentDelay *= 2; // Double the delay for the next attempt
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "secure-fitness-planner-app",
+  "version": "1.0.0",
+  "description": "A secure Vercel application using a Serverless Function to proxy Gemini API requests.",
+  "main": "api/generate-plan.js",
+  "scripts": {
+    "start": "node api/generate-plan.js"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.1"
+  }
+}
